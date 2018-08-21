@@ -36,8 +36,8 @@ CommandWidget::CommandWidget(QWidget *parent) :
 
     //we have a few buttons to make here. Lets name this newButton so its easier to reuse
     auto newButton = new QPushButton(tr("Send"));
-    connect(newButton, &QPushButton::clicked, [&] {
-        emit(commandPressed(lineCommand->text()));
+    connect(newButton, &QPushButton::clicked, this, [this] {
+        emit commandPressed(lineCommand->text());
         lineCommand->clear();
     });
     //When you have created a Row put the items into layout.
@@ -55,8 +55,8 @@ CommandWidget::CommandWidget(QWidget *parent) :
     //Reuse our button pointer.
     newButton = new QPushButton(tr("Send"));
 
-    connect(newButton, &QPushButton::clicked, [&] {
-        emit(messagePressed(lineMessage->text()));
+    connect(newButton, &QPushButton::clicked, this, [this] {
+        emit messagePressed(lineMessage->text());
         lineMessage->clear();
     });
 

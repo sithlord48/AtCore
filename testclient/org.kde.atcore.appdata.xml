@@ -6,12 +6,16 @@
   <name xml:lang="ca">Client de prova de l'AtCore</name>
   <name xml:lang="ca-valencia">Client de prova de l'AtCore</name>
   <name xml:lang="cs">Testovací klient AtCore</name>
+  <name xml:lang="de">AtCore-Testprogramm</name>
   <name xml:lang="en-GB">AtCore Test Client</name>
   <name xml:lang="es">Cliente de prueba de AtCore</name>
+  <name xml:lang="fi">AtCore-koeasiakas</name>
   <name xml:lang="gl">Cliente de probas de AtCore</name>
   <name xml:lang="id">AtCore Test Client</name>
+  <name xml:lang="ko">AtCore 테스트 클라이언트</name>
   <name xml:lang="nl">AtCore testclient</name>
   <name xml:lang="pt">Cliente de Testes do AtCore</name>
+  <name xml:lang="pt-BR">Cliente de testes AtCore</name>
   <name xml:lang="sk">AtCore Test Klient</name>
   <name xml:lang="sv">AtCore testklient</name>
   <name xml:lang="uk">Тестовий клієнт AtCore</name>
@@ -20,15 +24,19 @@
   <summary>A test application for the AtCore framework to control 3D printers</summary>
   <summary xml:lang="ca">Una aplicació de prova per a l'entorn de treball AtCore per controlar impressores 3D</summary>
   <summary xml:lang="ca-valencia">Una aplicació de prova per a l'entorn de treball AtCore per controlar impressores 3D</summary>
+  <summary xml:lang="de">Ein Testprogramm für die AtCore-Bibliothek zur Steuerung von 3D-Druckern</summary>
   <summary xml:lang="en-GB">A test application for the AtCore framework to control 3D printers</summary>
   <summary xml:lang="es">Una aplicación de pruebas para la infraestructura AtCore de control de impresoras en 3D</summary>
+  <summary xml:lang="fi">Koeasiakas 3D-tulostinten AtCore-hallintakehykseen</summary>
   <summary xml:lang="gl">Un aplicativo de probas para a infraestrutura AtCore para controlar impresoras 3D</summary>
   <summary xml:lang="id">Sebuah aplikasi uji untuk kerangka kerja AtCore guna mengendalikan pencetak 3D</summary>
+  <summary xml:lang="ko">3D 프린터를 제어하는 AtCore 프레임워크 테스트 프로그램</summary>
   <summary xml:lang="nl">Een testtoepassing voor het AtCore-framework om 3D-printers te besturen</summary>
   <summary xml:lang="pt">Uma aplicação de testes da plataforma AtCore para controlar as impressoras 3D</summary>
   <summary xml:lang="sv">Ett testprogram av ramverket AtCore för att styra 3D-skrivare</summary>
   <summary xml:lang="uk">Тестова програма для бібліотек AtCore, які призначено для керування 3D-принтерами</summary>
   <summary xml:lang="x-test">xxA test application for the AtCore framework to control 3D printersxx</summary>
+  <summary xml:lang="zh-CN">一个测试应用程序，用于控制 3D 打印机的 AtCore 框架</summary>
   <description>
     <p>
         AtCore is the API that controls the 3DPrinter and its basic functionalities. AtCore comes with a test client called atcore-gui to manage your printer.
@@ -37,13 +45,16 @@
     <p xml:lang="ca-valencia">L'AtCore és l'API que controla la impressora 3D i les seues funcionalitats bàsiques. L'AtCore ve amb client de prova anomenant «atcore-gui» per gestionar la impressora.</p>
     <p xml:lang="en-GB">AtCore is the API that controls the 3DPrinter and its basic functionalities. AtCore comes with a test client called atcore-gui to manage your printer.</p>
     <p xml:lang="es">AtCore es la API que controla la impresión en 3D y sus funcionalidades básicas. AtCore contiene una aplicación cliente de pruebas llamada «atcore-gui» para gestionar la impresora.</p>
+    <p xml:lang="fi">AtCore on API, joka hallitsee 3D-tulostimen perustoimintoja. AtCoren mukana tulee koeasiakas nimeltä atcore-gui, jolla voit hallita tulostintasi.</p>
     <p xml:lang="gl">AtCore é a API que controla a impresora 3D e as súas funcionalidades básicas. AtCore inclúe un cliente de probas chamado atcore-gui para xestionar a súa impresora.</p>
     <p xml:lang="id">AtCore adalah API yang mengendalikan 3DPrinter dan yang berbasiskan fungsionalitas. AtCore hadir dengan sebuah klien uji yang disebut atcore-gui untuk mengelola pencetakmu.</p>
+    <p xml:lang="ko">AtCore는 3D 프린터와 기본 기능을 제어하는 API입니다. 프린터를 관리할 수 있는 atcore-gui 테스트 클라이언트와 함께 제공됩니다.</p>
     <p xml:lang="nl">AtCore is de API die de 3D-printer en zijn basis functionaliteiten bestuurt. AtCore komt met een testclient genaamd atcore-gui om uw printer te beheren.</p>
     <p xml:lang="pt">O AtCore é a API que controla as impressoras 3D e a suas funcionalidades básicas. O AtCore vem com um cliente de testes chamado 'atcore-gui' para gerir a sua impressora.</p>
     <p xml:lang="sv">AtCore är programmeringsgränssnittet som styr 3D-skrivaren och dess grundfunktioner. AtCore levereras med en testklient som kallas atcore-gui för att hantera skrivaren.</p>
     <p xml:lang="uk">AtCore — програмний інтерфейс для керування 3D-принтером та його базовими можливостями. AtCore постачається із тестовим клієнтом із назвою atcore-gui, за допомогою якого можна керувати вашим принтером.</p>
     <p xml:lang="x-test">xxAtCore is the API that controls the 3DPrinter and its basic functionalities. AtCore comes with a test client called atcore-gui to manage your printer.xx</p>
+    <p xml:lang="zh-CN">AtCore 是用于控制 3D 打印机及它基础功能的 API。AtCore 包含一个用于管里您的打印机的测试客户端，叫做 atcore-gui。</p>
     <p>
         This is an AtCore test application to showcase the framework.
     </p>
@@ -52,13 +63,16 @@
     <p xml:lang="de">Dies ist eine AtCore-Testanwendung, um das Framework demonstrieren.</p>
     <p xml:lang="en-GB">This is an AtCore test application to showcase the framework.</p>
     <p xml:lang="es">Esto es una aplicación de pruebas de AtCore mara mostrar la infraestructura.</p>
+    <p xml:lang="fi">Tämä on kehyksen esittelyyn tarkoitettu AtCore-koeasiakas.</p>
     <p xml:lang="gl">Isto é un aplicativo de probas de AtCore para demostrar a infraestrutura.</p>
     <p xml:lang="id">Ini adalah sebuah aplikasi uji AtCore untuk menampilkan kerangka kerja.</p>
+    <p xml:lang="ko">AtCore 프레임워크의 기능을 보여 주는 테스트 프로그램입니다.</p>
     <p xml:lang="nl">Dit is een AtCore testtoepassing om het framework te tonen.</p>
     <p xml:lang="pt">Esta é uma aplicação de testes do AtCore para demonstrar a plataforma.</p>
     <p xml:lang="sv">Det här är ett testprogram för AtCore för att visa upp ramverket</p>
     <p xml:lang="uk">Це тестова програма AtCore, яка демонструє можливості бібліотеки.</p>
     <p xml:lang="x-test">xxThis is an AtCore test application to showcase the framework.xx</p>
+    <p xml:lang="zh-CN">这是用于展示这个框架的 AtCore 测试引用程序。</p>
   </description>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0+</project_license>

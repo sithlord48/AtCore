@@ -35,8 +35,8 @@ StatusWidget::StatusWidget(bool showStop, QWidget *parent) :
 
     if (showStop) {
         auto newButton = new QPushButton(style()->standardIcon(QStyle::SP_BrowserStop), QString());
-        connect(newButton, &QPushButton::clicked, [this] {
-            emit(stopPressed());
+        connect(newButton, &QPushButton::clicked, this, [this] {
+            emit stopPressed();
         });
         hBoxLayout->addWidget(newButton);
     }

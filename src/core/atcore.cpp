@@ -31,6 +31,7 @@
 #include <QTime>
 #include <QTimer>
 #include <QThread>
+#include <QMetaEnum>
 
 #include "atcore.h"
 #include "atcore_version.h"
@@ -45,7 +46,7 @@ Q_LOGGING_CATEGORY(ATCORE_CORE, "org.kde.atelier.core")
  * @brief The AtCorePrivate struct
  * Provides a private data set for atcore.
  */
-struct AtCorePrivate {
+struct AtCore::AtCorePrivate {
     IFirmware *firmwarePlugin = nullptr;//!< @param firmwarePlugin: pointer to firmware plugin
     SerialLayer *serial = nullptr;      //!< @param serial: pointer to the serial layer
     QPluginLoader pluginLoader;         //!< @param pluginLoader: QPluginLoader
@@ -81,11 +82,8 @@ AtCore::AtCore(QObject *parent) :
     d->tempTimer->setInterval(5000);
     d->tempTimer->setSingleShot(false);
     //Attempt to find our plugins
-    QStringList paths = AtCoreDirectories::pluginDir;
-    //Add Our current run path/ plugins to the list
-    paths.prepend(qApp->applicationDirPath() + QStringLiteral("/plugins"));
     qCDebug(ATCORE_PLUGIN) << "Detecting Plugin path";
-    for (const auto &path : paths) {
+    for (const auto &path : AtCoreDirectories::pluginDir) {
         qCDebug(ATCORE_PLUGIN) << "Checking: " << path;
         QMap <QString, QString> tempMap = findFirmwarePlugins(path);
         if (!tempMap.isEmpty()) {
@@ -307,7 +305,7 @@ void AtCore::newMessage(const QByteArray &message)
     if (d->lastMessage.contains("T:") || d->lastMessage.contains("B:")) {
         temperature().decodeTemp(message);
     }
-    emit(receivedMessage(d->lastMessage));
+    emit receivedMessage(d->lastMessage);
 }
 
 void AtCore::setRelativePosition()
@@ -333,15 +331,18 @@ void AtCore::print(const QString &fileName, bool sdPrint)
     }
     //Start a print job.
     setState(AtCore::STARTPRINT);
-    if (sdPrint) {
-        //Printing from the sd card requires us to send some M commands.
-        pushCommand(GCode::toCommand(GCode::M23, fileName));
-        d->sdCardFileName = fileName;
-        pushCommand(GCode::toCommand(GCode::M24));
-        setState(AtCore::BUSY);
-        d->sdCardPrinting = true;
-        connect(d->tempTimer, &QTimer::timeout, this, &AtCore::sdCardPrintStatus);
-        return;
+    //Only try to print from Sd if the firmware has support for sd cards
+    if (firmwarePlugin()->isSdSupported()) {
+        if (sdPrint) {
+            //Printing from the sd card requires us to send some M commands.
+            pushCommand(GCode::toCommand(GCode::M23, fileName));
+            d->sdCardFileName = fileName;
+            pushCommand(GCode::toCommand(GCode::M24));
+            setState(AtCore::BUSY);
+            d->sdCardPrinting = true;
+            connect(d->tempTimer, &QTimer::timeout, this, &AtCore::sdCardPrintStatus);
+            return;
+        }
     }
     //Process the gcode with a printThread.
     //The Thread processes the gcode without freezing the libary.
@@ -406,15 +407,15 @@ void AtCore::setState(AtCore::STATES state)
 {
     if (state != d->printerState) {
         qCDebug(ATCORE_CORE) << QStringLiteral("Atcore state changed from [%1] to [%2]")
-                             .arg(QVariant::fromValue(d->printerState).value<QString>())
-                             .arg(QVariant::fromValue(state).value<QString>());
+                             .arg(QVariant::fromValue(d->printerState).value<QString>(),
+                                  QVariant::fromValue(state).value<QString>());
         d->printerState = state;
         if (state == AtCore::FINISHEDPRINT && d->sdCardPrinting) {
             //Clean up the sd card print
             d->sdCardPrinting = false;
             disconnect(d->tempTimer, &QTimer::timeout, this, &AtCore::sdCardPrintStatus);
         }
-        emit(stateChanged(d->printerState));
+        emit stateChanged(d->printerState);
     }
 }
 
@@ -600,24 +601,8 @@ void AtCore::setFlowRate(uint speed)
 
 void AtCore::move(AtCore::AXES axis, int arg)
 {
-    static QLatin1Char a('?');
-    switch (axis) {
-    case AtCore::X:
-        a = QLatin1Char('X');
-        break;
-    case AtCore::Y:
-        a = QLatin1Char('Y');
-        break;
-    case AtCore::Z:
-        a = QLatin1Char('Z');
-        break;
-    case AtCore::E:
-        a = QLatin1Char('E');
-        break;
-    default:
-        break;
-    };
-    move(a, arg);
+    const auto axisAsString = QMetaEnum::fromType<AtCore::AXES>().valueToKey(axis);
+    move(QLatin1Char(axisAsString[0]), arg);
 }
 
 void AtCore::move(QLatin1Char axis, int arg)
@@ -713,7 +698,7 @@ void AtCore::setSdMounted(bool mounted)
 {
     if (mounted != isSdMounted()) {
         d->sdCardMounted = mounted;
-        emit(sdMountChanged(d->sdCardMounted));
+        emit sdMountChanged(d->sdCardMounted);
     }
 }
 
@@ -733,13 +718,13 @@ QStringList AtCore::sdFileList()
 void AtCore::appendSdCardFileList(const QString &fileName)
 {
     d->sdCardFileList.append(fileName);
-    emit(sdCardFileListChanged(d->sdCardFileList));
+    emit sdCardFileListChanged(d->sdCardFileList);
 }
 
 void AtCore::clearSdCardFileList()
 {
     d->sdCardFileList.clear();
-    emit(sdCardFileListChanged(d->sdCardFileList));
+    emit sdCardFileListChanged(d->sdCardFileList);
 }
 
 void AtCore::sdDelete(const QString &fileName)

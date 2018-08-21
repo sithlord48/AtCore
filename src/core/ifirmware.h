@@ -32,7 +32,6 @@
 class Temperature;
 class AtCore;
 
-struct IFirmwarePrivate;
 /**
  * @brief The IFirmware class
  * Base Class for Firmware Plugins
@@ -41,10 +40,17 @@ class ATCORE_EXPORT  IFirmware : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString name READ name)
+    Q_PROPERTY(bool sdSupport READ isSdSupported)
 public:
     IFirmware();
     void init(AtCore *parent);
     ~IFirmware() override;
+
+    /**
+     * @brief Check for plugin support of sd cards.
+     * @return True if firmware plugin supports sd cards.
+     */
+    virtual bool isSdSupported() const = 0;
 
     /**
      * @brief Virtual name to be reimplemnted by Firmware plugin
@@ -75,6 +81,7 @@ public:
      */
     AtCore *core() const;
 private:
+    struct IFirmwarePrivate;
     IFirmwarePrivate *d;
 public slots:
     /**

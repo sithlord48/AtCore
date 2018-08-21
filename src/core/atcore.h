@@ -26,7 +26,6 @@
 #pragma once
 
 #include <QObject>
-#include <QList>
 #include <QSerialPortInfo>
 
 #include "ifirmware.h"
@@ -36,8 +35,6 @@
 class SerialLayer;
 class IFirmware;
 class QTime;
-
-struct AtCorePrivate;
 
 /**
  * @brief The AtCore class
@@ -52,10 +49,12 @@ struct AtCorePrivate;
  * #### How AtCore Finds Plugins.
  * AtCore will check each directory below for plugins.
  *  1. QApplication::applicationDirPath/plugins (runtime)
- *  2. Fullpath of KDE_PLUGIN_DIR (buildtime)
- *  3. Qt Plugin path/AtCore (runtime)
- *  4. ECM set KDE PLUGIN DIR  (buildtime)
- *  5. Build Dir/plugins (buildtime)
+ *  2. QApplication::applicationDirPath/AtCore (runtime)
+ *  3. QApplication::applicationDirPath/../PlugIns/AtCore (runtime)
+ *  4. Fullpath of KDE_PLUGIN_DIR (buildtime)
+ *  5. Qt Plugin path/AtCore (runtime)
+ *  6. ECM set KDE PLUGIN DIR  (buildtime)
+ *  7. Build Dir/plugins (buildtime)
  */
 class ATCORE_EXPORT AtCore : public QObject
 {
@@ -543,6 +542,7 @@ private:
     /**
      * @brief Hold private data of AtCore.
      */
+    struct AtCorePrivate;
     AtCorePrivate *d;
 
 protected:

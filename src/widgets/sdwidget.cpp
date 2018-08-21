@@ -29,21 +29,27 @@ SdWidget::SdWidget(QWidget *parent) :
 
     auto newButton = new QPushButton(tr("Get List"));
     hBoxLayout->addWidget(newButton);
-    connect(newButton, &QPushButton::clicked, [this] {
-        emit(requestSdList());
+    connect(newButton, &QPushButton::clicked, this, [this] {
+        emit requestSdList();
     });
 
     newButton = new QPushButton(tr("Print Selected"));
     hBoxLayout->addWidget(newButton);
-    connect(newButton, &QPushButton::clicked, [this] {
-        emit(printSdFile(listSdFiles->currentItem()->text()));
+    connect(newButton, &QPushButton::clicked, this, [this] {
+        if (listSdFiles->currentRow() != -1)
+        {
+            emit printSdFile(listSdFiles->currentItem()->text());
+        }
     });
 
     newButton = new QPushButton(tr("Delete Selected"));
     hBoxLayout->addWidget(newButton);
-    connect(newButton, &QPushButton::clicked, [this] {
-        emit(deleteSdFile(listSdFiles->currentItem()->text()));
-        listSdFiles->setCurrentRow(-1);
+    connect(newButton, &QPushButton::clicked, this, [this] {
+        if (listSdFiles->currentRow() != -1)
+        {
+            emit deleteSdFile(listSdFiles->currentItem()->text());
+            listSdFiles->setCurrentRow(-1);
+        }
     });
 
     auto groupFiles =  new QGroupBox(tr("Files On Sd Card"));

@@ -30,13 +30,13 @@ PrintWidget::PrintWidget(bool showAllControls, QWidget *parent) :
     QHBoxLayout *hBoxLayout = nullptr;
     if (showAllControls) {
         buttonPrint = new QPushButton(tr("Print File"));
-        connect(buttonPrint, &QPushButton::clicked, [this] {
-            emit(printPressed());
+        connect(buttonPrint, &QPushButton::clicked, this, [this] {
+            emit printPressed();
         });
 
         newButton = new QPushButton(tr("Emergency Stop"));
-        connect(newButton, &QPushButton::clicked, [this] {
-            emit(emergencyStopPressed());
+        connect(newButton, &QPushButton::clicked, this, [this] {
+            emit emergencyStopPressed();
         });
 
         hBoxLayout = new QHBoxLayout;
@@ -62,8 +62,8 @@ PrintWidget::PrintWidget(bool showAllControls, QWidget *parent) :
     sbPrintSpeed->setSuffix(QStringLiteral("%"));
 
     newButton = new QPushButton(tr("Set"));
-    connect(newButton, &QPushButton::clicked, [this] {
-        emit(printSpeedChanged(sbPrintSpeed->value()));
+    connect(newButton, &QPushButton::clicked, this, [this] {
+        emit printSpeedChanged(sbPrintSpeed->value());
     });
 
     hBoxLayout = new QHBoxLayout;
@@ -79,8 +79,8 @@ PrintWidget::PrintWidget(bool showAllControls, QWidget *parent) :
     sbFlowRate->setSuffix(QStringLiteral("%"));
 
     newButton = new QPushButton(tr("Set"));
-    connect(newButton, &QPushButton::clicked, [this] {
-        emit(flowRateChanged(sbFlowRate->value()));
+    connect(newButton, &QPushButton::clicked, this, [this] {
+        emit flowRateChanged(sbFlowRate->value());
     });
     hBoxLayout = new QHBoxLayout;
     hBoxLayout->addWidget(newLabel, 60);
@@ -94,8 +94,8 @@ PrintWidget::PrintWidget(bool showAllControls, QWidget *parent) :
     sbFanSpeed->setSuffix(QStringLiteral("%"));
 
     newButton = new QPushButton(tr("Set"));
-    connect(newButton, &QPushButton::clicked, [this] {
-        emit(fanSpeedChanged(sbFanSpeed->value(), comboFanSelect->currentIndex()));
+    connect(newButton, &QPushButton::clicked, this, [this] {
+        emit fanSpeedChanged(sbFanSpeed->value(), comboFanSelect->currentIndex());
     });
 
     hBoxLayout = new QHBoxLayout;
