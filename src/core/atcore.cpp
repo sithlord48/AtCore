@@ -83,13 +83,16 @@ AtCore::AtCore(QObject *parent) :
     d->tempTimer->setSingleShot(false);
     //Attempt to find our plugins
     qCDebug(ATCORE_PLUGIN) << "Detecting Plugin path";
-    for (const auto &path : AtCoreDirectories::pluginDir) {
-        qCDebug(ATCORE_PLUGIN) << "Checking: " << path;
-        QMap <QString, QString> tempMap = findFirmwarePlugins(path);
-        if (!tempMap.isEmpty()) {
-            d->plugins = tempMap;
-            return;
-        }
+    QStringList paths = AtCoreDirectories::pluginDir;
+    //add our current runtime path
+    paths.prepend(qApp->applicationDirPath() + QStringLiteral("/plugins"));
+    for (const auto &path : paths) {
+    qCDebug(ATCORE_PLUGIN) << "Checking: " << path;
+    QMap <QString, QString> tempMap = findFirmwarePlugins(path);
+    if (!tempMap.isEmpty()) {
+        d->plugins = tempMap;
+        return;
+    }
     }
     setState(AtCore::DISCONNECTED);
 }
