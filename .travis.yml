@@ -44,7 +44,7 @@ before_install:
 script:
 - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then 
     source /opt/qt*/bin/qt*-env.sh; 
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_GUI=ON -DDEPLOY_PLUGINS_WITH_BINARY=ON CMakeLists.txt; 
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_GUI=ON CMakeLists.txt; 
     make;
     sudo make install; 
     make DESTDIR=appdir/ install; find appdir/; 
