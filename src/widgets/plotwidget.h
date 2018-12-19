@@ -35,7 +35,7 @@ class ATCOREWIDGETS_EXPORT PlotWidget : public QWidget
 
 public:
     explicit PlotWidget(QWidget *parent = nullptr);
-    ~PlotWidget();
+    ~PlotWidget() = default;
 
     /**
      * @brief Create a new plot
@@ -64,9 +64,9 @@ public:
 
     /**
      * @brief set The Maximum Number of points per series the plot widget stores
-     * @param newMax: new maximum Number (default:24)
+     * @param newMax: new maximum Number (default:120)
      */
-    void setMaximumPoints(const uint newMax);
+    void setMaximumPoints(const int newMax);
 
     /**
      * @brief set the maximum temperature shown on the plot
@@ -80,12 +80,12 @@ private:
     public:
         explicit plot() : _series(new QLineSeries())
         {
-        };
+        }
 
         ~plot()
         {
             // Series will be deleted with chart
-        };
+        }
 
         void pushPoint(float value)
         {

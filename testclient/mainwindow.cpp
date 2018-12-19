@@ -1,5 +1,5 @@
 /* AtCore Test Client
-    Copyright (C) <2016>
+    Copyright (C) <2016 - 2018>
 
     Authors:
         Patrick José Pereira <patrickjp@kde.org>
@@ -24,6 +24,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QTextStream>
+#include <QTimer>
 #include <QLoggingCategory>
 
 #include "mainwindow.h"
@@ -53,6 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(core, &AtCore::stateChanged, this, &MainWindow::printerStateChanged);
     connect(core, &AtCore::portsChanged, this, &MainWindow::locateSerialPort);
     connect(core, &AtCore::sdCardFileListChanged, sdWidget, &SdWidget::updateFilelist);
+    comboPort->setFocus(Qt::OtherFocusReason);
 }
 
 void MainWindow::initMenu()
@@ -153,11 +155,11 @@ void MainWindow::makePrintDock()
     connect(printWidget, &PrintWidget::fanSpeedChanged, core, &AtCore::setFanSpeed);
 
     connect(printWidget, &PrintWidget::printSpeedChanged, this, [this](const int speed) {
-        core->setPrinterSpeed(speed);
+        core->setPrinterSpeed(uint(std::max(1, speed)));
     });
 
     connect(printWidget, &PrintWidget::flowRateChanged, [this](const int rate) {
-        core->setFlowRate(rate);
+        core->setFlowRate(uint(std::max(1, rate)));
     });
 
     printDock = new QDockWidget(tr("Print"), this);
@@ -195,8 +197,35 @@ void MainWindow::makeTempTimelineDock()
         plotWidget->appendPoint(tr("Target Ext.1"), temp);
     });
 
+    auto timerLayout = new QHBoxLayout;
+    auto lblTimer = new QLabel(tr("Seconds Between Temperature Checks"), this);
+    auto sbTemperatureTimer = new QSpinBox(this);
+    sbTemperatureTimer->setRange(0, 90);
+
+    connect(sbTemperatureTimer, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int value) {
+        core->setTemperatureTimerInterval(value * 1000);
+    });
+
+    connect(core, &AtCore::temperatureTimerIntervalChanged, this, [sbTemperatureTimer](int value) {
+        if (value != sbTemperatureTimer->value()) {
+            sbTemperatureTimer->blockSignals(true);
+            sbTemperatureTimer->setValue(value / 1000);
+            sbTemperatureTimer->blockSignals(false);
+        }
+    });
+
+    timerLayout->addWidget(lblTimer);
+    timerLayout->addWidget(sbTemperatureTimer);
+
+    auto tempDockLayout = new QVBoxLayout;
+    tempDockLayout->addWidget(plotWidget);
+    tempDockLayout->addLayout(timerLayout);
+
+    auto tempDockMainWidget = new QWidget(this);
+    tempDockMainWidget->setLayout(tempDockLayout);
+
     tempTimelineDock = new QDockWidget(tr("Temperature Timeline"), this);
-    tempTimelineDock->setWidget(plotWidget);
+    tempTimelineDock->setWidget(tempDockMainWidget);
     menuView->insertAction(nullptr, tempTimelineDock->toggleViewAction());
     addDockWidget(Qt::RightDockWidgetArea, tempTimelineDock);
 }
@@ -245,6 +274,14 @@ void MainWindow::makeConnectDock()
     hBoxLayout->addWidget(comboPlugin, 75);
     mainLayout->addLayout(hBoxLayout);
 
+    cbReset = new QCheckBox(tr("Attempt to stop Reset on connect"));
+    cbReset->setHidden(true);
+    mainLayout->addWidget(cbReset);
+
+    connect(comboPlugin, &QComboBox::currentTextChanged, this, [this](const QString & currentText) {
+        cbReset->setHidden(currentText == tr("Autodetect"));
+    });
+
     buttonConnect = new QPushButton(tr("Connect"));
     connect(buttonConnect, &QPushButton::clicked, this, &MainWindow::connectPBClicked);
     mainLayout->addWidget(buttonConnect);
@@ -261,7 +298,7 @@ void MainWindow::makeConnectDock()
 
 void MainWindow::makeMoveDock()
 {
-    movementWidget = new MovementWidget;
+    movementWidget = new MovementWidget(true, this);
 
     connect(movementWidget, &MovementWidget::homeAllPressed, this, [this] {
         logWidget->appendLog(tr("Home All"));
@@ -296,6 +333,11 @@ void MainWindow::makeMoveDock()
         core->setRelativePosition();
         core->move(axis, value);
         core->setAbsolutePosition();
+    });
+
+    connect(movementWidget, &MovementWidget::unitsChanged, this, [this](int units) {
+        auto selection = static_cast<AtCore::UNITS>(units);
+        core->setUnits(selection);
     });
 
     moveDock = new QDockWidget(tr("Movement"), this);
@@ -351,44 +393,36 @@ void MainWindow::closeEvent(QCloseEvent *event)
     event->accept();
 }
 
-MainWindow::~MainWindow()
-{
-
-}
-
-void MainWindow::checkTemperature(uint sensorType, uint number, uint temp)
+void MainWindow::checkTemperature(uint sensorType, uint number, float temp)
 {
     QString msg;
     switch (sensorType) {
     case 0x00: // bed
-        msg = QString::fromLatin1("Bed Temperature ");
+        msg = QString::fromLatin1("Bed Temperature");
         break;
 
     case 0x01: // bed target
-        msg = QString::fromLatin1("Bed Target Temperature ");
+        msg = QString::fromLatin1("Bed Target Temperature");
         break;
 
     case 0x02: // extruder
-        msg = QString::fromLatin1("Extruder Temperature ");
+        msg = QString::fromLatin1("Extruder[%1] Temperature").arg(QString::number(number));;
         break;
 
     case 0x03: // extruder target
-        msg = QString::fromLatin1("Extruder Target Temperature ");
+        msg = QString::fromLatin1("Extruder[%1] Target Temperature").arg(QString::number(number));
         break;
 
     case 0x04: // enclosure
-        msg = QString::fromLatin1("Enclosure Temperature ");
+        msg = QString::fromLatin1("Enclosure Temperature");
         break;
 
     case 0x05: // enclosure target
-        msg = QString::fromLatin1("Enclosure Target Temperature ");
+        msg = QString::fromLatin1("Enclosure Target Temperature");
         break;
     }
 
-    msg.append(QString::fromLatin1("[%1] : %2").arg(
-                   QString::number(number), QString::number(temp)
-               ));
-
+    msg.append(QString::fromLatin1(": %1").arg(QString::number(double(temp), 'f', 2)));
     logWidget->appendLog(msg);
 }
 /**
@@ -413,22 +447,24 @@ void MainWindow::locateSerialPort(const QStringList &ports)
 void MainWindow::connectPBClicked()
 {
     if (core->state() == AtCore::DISCONNECTED) {
-        if (core->initSerial(comboPort->currentText(), comboBAUD->currentText().toInt())) {
+        if (core->initSerial(comboPort->currentText(), comboBAUD->currentText().toInt(), cbReset->isChecked())) {
             connect(core, &AtCore::receivedMessage, logWidget, &LogWidget::appendRLog);
-            connect(core->serial(), &SerialLayer::pushedCommand, logWidget, &LogWidget::appendSLog);
-            buttonConnect->setText(tr("Disconnect"));
+            connect(core, &AtCore::pushedCommand, logWidget, &LogWidget::appendSLog);
             logWidget->appendLog(tr("Serial connected"));
             if (!comboPlugin->currentText().contains(tr("Autodetect"))) {
                 core->loadFirmwarePlugin(comboPlugin->currentText());
+                if (cbReset->isChecked()) {
+                    //Wait a few seconds after connect to avoid the normal errors
+                    QTimer::singleShot(5000, core, &AtCore::sdCardPrintStatus);
+                }
             }
         }
     } else {
         disconnect(core, &AtCore::receivedMessage, logWidget, &LogWidget::appendRLog);
-        disconnect(core->serial(), &SerialLayer::pushedCommand, logWidget, &LogWidget::appendSLog);
+        disconnect(core, &AtCore::pushedCommand, logWidget, &LogWidget::appendSLog);
         core->closeConnection();
         core->setState(AtCore::DISCONNECTED);
         logWidget->appendLog(tr("Disconnected"));
-        buttonConnect->setText(tr("Connect"));
     }
 }
 
@@ -469,7 +505,7 @@ void MainWindow::printPBClicked()
     }
 }
 
-void MainWindow::pluginCBChanged(QString currentText)
+void MainWindow::pluginCBChanged(const QString &currentText)
 {
     if (core->state() != AtCore::DISCONNECTED) {
         if (!currentText.contains(tr("Autodetect"))) {
@@ -484,6 +520,7 @@ void MainWindow::printerStateChanged(AtCore::STATES state)
     QString stateString;
     switch (state) {
     case AtCore::IDLE:
+        buttonConnect->setText(tr("Disconnect"));
         printWidget->setPrintText(tr("Print File"));
         stateString = tr("Connected to ") + core->connectedPort();
         sdDock->setVisible(core->firmwarePlugin()->isSdSupported());
@@ -513,6 +550,7 @@ void MainWindow::printerStateChanged(AtCore::STATES state)
 
     case AtCore::DISCONNECTED:
         stateString = QStringLiteral("Not Connected");
+        buttonConnect->setText(tr("Connect"));
         setDangeriousDocksDisabled(true);
         break;
 
@@ -566,5 +604,8 @@ void MainWindow::setDangeriousDocksDisabled(bool disabled)
     if (!disabled) {
         temperatureWidget->updateExtruderCount(core->extruderCount());
         printWidget->updateFanCount(fanCount);
+    } else {
+        printWidget->setPrintText(tr("Print File"));
+        statusWidget->showPrintArea(false);
     }
 }

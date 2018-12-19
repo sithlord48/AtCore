@@ -36,6 +36,7 @@ public:
      * @param parent: parent of this widget.
      */
     StatusWidget(bool showStop = true, QWidget *parent = nullptr);
+    ~StatusWidget() = default;
     /**
      * @brief Set if the status area should show SD card inserted.
      * @param hasSd
@@ -55,7 +56,7 @@ public:
      * @brief Update the progres to the new progress
      * @param progress: new progress.
      */
-    void updatePrintProgress(const float &progress);
+    void updatePrintProgress(const int progress);
 
 signals:
     void stopPressed();

@@ -45,7 +45,7 @@ public:
     void appendRLog(const QByteArray &bmsg);
 
     /**
-     * @brief Connect to AtCore::SerialLayer::pushedCommand
+     * @brief Connect to AtCore::pushedCommand
      * @param  bmsg: Message
      */
     void appendSLog(const QByteArray &bmsg);
@@ -73,7 +73,7 @@ private:
      * @brief Append text in temporary file
      * @param text
      */
-    void writeTempFile(QString text);
+    void writeTempFile(const QString &text);
 
     /**
      * @brief flush unwritten strings to temp file

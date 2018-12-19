@@ -1,5 +1,5 @@
 /* AtCore
-    Copyright (C) <2016>
+    Copyright (C) <2016 - 2018>
 
     Authors:
         Patrick José Pereira <patrickjp@kde.org>
@@ -29,12 +29,34 @@
 
 Q_LOGGING_CATEGORY(SERIAL_LAYER, "org.kde.atelier.core.serialLayer")
 
-namespace
-{
-QByteArray _return = QByteArray("\r");
-QByteArray _newLine = QByteArray("\n");
-QByteArray _newLineReturn = QByteArray("\n\r");
-QStringList _validBaudRates = {
+/**
+ * @brief The SerialLayerPrivate class
+ */
+struct SerialLayer::SerialLayerPrivate {
+    /** _lastError: the last reported error */
+    QSerialPort::SerialPortError _lastError = QSerialPort::NoError;
+    /** New Line String */
+    static const QByteArray _newLine;
+    /** New Line Return String */
+    static const QByteArray _newLineReturn;
+    /** _rawData: the raw serial data */
+    QByteArray _rawData;
+    /** _rByteCommand: received Messages */
+    QVector<QByteArray> _rByteCommands;
+    /** Return String */
+    static const QByteArray _return;
+    /** _sByteCommand: sent Messages */
+    QVector<QByteArray> _sByteCommands;
+    /** _serialOpened: is Serial port opened */
+    bool _serialOpened = false;
+    /** List of valid Baud Rates */
+    static const QStringList _validBaudRates;
+};
+
+const QByteArray SerialLayer::SerialLayerPrivate::_newLine = QByteArray("\n");
+const QByteArray SerialLayer::SerialLayerPrivate::_newLineReturn = QByteArray("\n\r");
+const QByteArray SerialLayer::SerialLayerPrivate::_return = QByteArray("\r");
+const QStringList SerialLayer::SerialLayerPrivate::_validBaudRates = {
     QStringLiteral("9600"),
     QStringLiteral("14400"),
     QStringLiteral("19200"),
@@ -48,21 +70,8 @@ QStringList _validBaudRates = {
     QStringLiteral("500000"),
     QStringLiteral("1000000")
 };
-}
 
-/**
- * @brief The SerialLayerPrivate class
- */
-class SerialLayer::SerialLayerPrivate
-{
-public:
-    bool _serialOpened;                 //!< @param _serialOpened: is serial port opened
-    QByteArray _rawData;                //!< @param _rawData: the raw serial data
-    QVector<QByteArray> _rByteCommands; //!< @param _rByteCommand: received Messages
-    QVector<QByteArray> _sByteCommands; //!< @param _sByteCommand: sent Messages
-};
-
-SerialLayer::SerialLayer(const QString &port, uint baud, QObject *parent) :
+SerialLayer::SerialLayer(const QString &port, int32_t baud, QObject *parent) :
     QSerialPort(parent), d(new SerialLayerPrivate())
 {
     setPortName(port);
@@ -70,6 +79,7 @@ SerialLayer::SerialLayer(const QString &port, uint baud, QObject *parent) :
     if (open(QIODevice::ReadWrite)) {
         d->_serialOpened = true;
         connect(this, &QSerialPort::readyRead, this, &SerialLayer::readAllData);
+        connect(this, &QSerialPort::errorOccurred, this, &SerialLayer::handleError);
     }
 };
 
@@ -80,9 +90,9 @@ void SerialLayer::readAllData()
     //Remove any \r in the string, then split by \n.
     //This removes any trailing \r or \n from the commands
     // Proper line endings are added when the command is pushed.
-    d->_rawData = d->_rawData.replace(_return, QByteArray());
+    d->_rawData = d->_rawData.replace(d->_return, QByteArray());
 
-    QList<QByteArray> tempList = d->_rawData.split(_newLine.at(0));
+    QList<QByteArray> tempList = d->_rawData.split(d->_newLine.at(0));
     for (auto i = tempList.begin(); i != tempList.end(); ++i) {
         // Get finished line to _byteCommands
         if (i < tempList.end() - 1) {
@@ -109,7 +119,7 @@ void SerialLayer::pushCommand(const QByteArray &comm, const QByteArray &term)
 
 void SerialLayer::pushCommand(const QByteArray &comm)
 {
-    pushCommand(comm, _newLineReturn);
+    pushCommand(comm, d->_newLineReturn);
 }
 
 void SerialLayer::add(const QByteArray &comm, const QByteArray &term)
@@ -120,7 +130,7 @@ void SerialLayer::add(const QByteArray &comm, const QByteArray &term)
 
 void SerialLayer::add(const QByteArray &comm)
 {
-    add(comm, _newLineReturn);
+    add(comm, d->_newLineReturn);
 }
 
 void SerialLayer::push()
@@ -143,5 +153,15 @@ bool SerialLayer::commandAvailable() const
 
 QStringList SerialLayer::validBaudRates() const
 {
-    return _validBaudRates;
+    return d->_validBaudRates;
+}
+
+void SerialLayer::handleError(QSerialPort::SerialPortError error)
+{
+    if (d->_lastError == error) {
+        return;
+    }
+
+    d->_lastError = error;
+    emit serialError(error);
 }

@@ -36,6 +36,7 @@ public:
      * @param parent: Parent of this widget.
      */
     MovementWidget(bool showHomeAndDisableWidgets = true, QWidget *parent = nullptr);
+    ~MovementWidget() = default;
 
 signals:
     /**
@@ -74,7 +75,7 @@ signals:
      * @param axis: the axis to move
      * @param value: where to move
      */
-    void absoluteMove(const QLatin1Char &axis, const double &value);
+    void absoluteMove(const QLatin1Char &axis, const double value);
 
     /**
      * @brief A relativeMove was requested from the AxisControl
@@ -85,7 +86,14 @@ signals:
      * @param axis: the axis to move.
      * @param value: the value to move it by.
      */
-    void relativeMove(const QLatin1Char &axis, const double &value);
+    void relativeMove(const QLatin1Char &axis, const double value);
+
+    /**
+     * @brief A Change of units was requested from the AxisControl
+     * This should connect to a function that calls AtCore::setUnits
+     * @param units: 0=Metric 1=Imperial
+     */
+    void unitsChanged(int units);
 
 private:
     QComboBox *comboMoveAxis = nullptr;

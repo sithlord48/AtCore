@@ -1,5 +1,5 @@
 /* AtCore
-    Copyright (C) <2016>
+    Copyright (C) <2016 - 2018>
 
     Authors:
         Tomaz Canabrava <tcanabrava@kde.org>
@@ -26,6 +26,7 @@
 #pragma once
 
 #include <QObject>
+#include <QSerialPort>
 #include <QSerialPortInfo>
 
 #include "ifirmware.h"
@@ -62,7 +63,8 @@ class ATCORE_EXPORT AtCore : public QObject
     Q_PROPERTY(QString version READ version)
     Q_PROPERTY(QStringList availableFirmwarePlugins READ availableFirmwarePlugins)
     Q_PROPERTY(int extruderCount READ extruderCount WRITE setExtruderCount NOTIFY extruderCountChanged)
-    Q_PROPERTY(quint16 serialTimerInterval READ serialTimerInterval WRITE setSerialTimerInterval NOTIFY serialTimerIntervalChanged)
+    Q_PROPERTY(int temperatureTimerInterval READ temperatureTimerInterval WRITE setTemperatureTimerInterval NOTIFY temperatureTimerIntervalChanged);
+    Q_PROPERTY(int serialTimerInterval READ serialTimerInterval WRITE setSerialTimerInterval NOTIFY serialTimerIntervalChanged)
     Q_PROPERTY(QStringList serialPorts READ serialPorts NOTIFY portsChanged)
     Q_PROPERTY(float percentagePrinted READ percentagePrinted NOTIFY printProgressChanged)
     Q_PROPERTY(QStringList portSpeeds READ portSpeeds)
@@ -119,6 +121,7 @@ public:
      * @param parent: parent of the object
      */
     explicit AtCore(QObject *parent = nullptr);
+    ~AtCore() = default;
 
     /**
      * @brief version
@@ -143,22 +146,16 @@ public:
      * @brief Initialize a connection to \p port at a speed of \p baud <br />
      * @param port: the port to initialize
      * @param baud: the baud of the port
+     * @param disableROC: atcore will attempt to disable reset on connect for this device.
      * @return True is connection was successful
      * @sa serialPorts(),serial(),closeConnection()
      */
-    Q_INVOKABLE bool initSerial(const QString &port, int baud);
+    Q_INVOKABLE bool initSerial(const QString &port, int baud, bool disableROC = false);
 
     /**
      * @brief Returns a list of valid baud speeds
      */
     QStringList portSpeeds() const;
-
-    /**
-     * @brief Main access to the serialLayer
-     * @return Current serialLayer
-     * @sa initSerial(),serialPorts(),closeConnection()
-     */
-    SerialLayer *serial() const;
 
     /**
      * @brief Close the current serial connection
@@ -191,7 +188,7 @@ public:
      * @return State of the printer
      * @sa setState(),stateChanged(),AtCore::STATES
      */
-    AtCore::STATES state(void);
+    AtCore::STATES state();
 
     /**
      * @brief extruderCount
@@ -214,7 +211,12 @@ public:
     /**
     * @brief Return the amount of miliseconds the serialTimer is set to. 0 = Disabled
     */
-    quint16 serialTimerInterval() const;
+    int serialTimerInterval() const;
+
+    /**
+    * @brief Return the amount of miliseconds the temperatureTimer is set to. 0 = Disabled
+    */
+    int temperatureTimerInterval() const;
 
     /**
      * @brief Attempt to Mount an sd card
@@ -249,6 +251,7 @@ signals:
      *   - Waiting for firmware detect.
      *   - No Plugin found for (detected FW)
      *   - Failed to open device in Read / Write mode.
+     *   - Device Errors.
      * @param msg: the message.
      */
     void atcoreMessage(const QString &msg);
@@ -264,7 +267,7 @@ signals:
      * @param newProgress : Message
      * @sa percentagePrinted()
      */
-    void printProgressChanged(const float &newProgress);
+    void printProgressChanged(const float newProgress);
 
     /**
      * @brief New message was received from the printer
@@ -273,10 +276,16 @@ signals:
     void receivedMessage(const QByteArray &message);
 
     /**
-    * @brief New interval between serial timer
+    * @brief New interval for serial timer
     * @sa setSerialTimerInterval()
     */
-    void serialTimerIntervalChanged(const quint16 newTime);
+    void serialTimerIntervalChanged(const int newTime);
+
+    /**
+    * @brief New interval for temperature timer
+    * @sa setTemperatureTimerInterval()
+    */
+    void temperatureTimerIntervalChanged(const int newTime);
 
     /**
      * @brief The Printer's State Changed
@@ -299,6 +308,12 @@ signals:
      * @brief The files on the sd card have changed.
      */
     void sdCardFileListChanged(const QStringList &fileList);
+
+    /**
+     * @brief pushedCommand via serialLayer connect this to your log to see send commands
+     * @param comm: the command sent.
+     */
+    void pushedCommand(const QByteArray &comm);
 
 public slots:
 
@@ -379,7 +394,7 @@ public slots:
      * @param arg the distance to move the axis or the place to move to depending on printer mode
      * @sa home(), home(uchar axis), move(QLatin1Char axis, int arg)
      */
-    Q_INVOKABLE void move(AtCore::AXES axis, int arg);
+    Q_INVOKABLE void move(AtCore::AXES axis, double arg);
 
     /**
      * @brief move an axis of the printer
@@ -387,7 +402,7 @@ public slots:
      * @param arg the distance to move the axis or the place to move to depending on printer mode
      * @sa home(), home(uchar axis), move(AtCore::AXES, int arg)
      */
-    Q_INVOKABLE void move(QLatin1Char axis, int arg);
+    Q_INVOKABLE void move(QLatin1Char axis, double arg);
 
     /**
      * @brief Set the bed temperature
@@ -456,9 +471,15 @@ public slots:
 
     /**
      * @brief Set the time between checks for new serialPorts (0 is default)
-     * @param newTime: Milliseconds between checks. 0 will Disable Checks.
+     * @param newTime: Milliseconds between checks. values <= 0 will Disable Checks.
      */
-    void setSerialTimerInterval(const quint16 &newTime);
+    void setSerialTimerInterval(int newTime);
+
+    /**
+     * @brief Set the time between checks for new Temperature (5000 is default on new connections)
+     * @param newTime: Milliseconds between checks. values <= 0 will Disable Checks.
+     */
+    void setTemperatureTimerInterval(int newTime);
 
     /**
      * @brief delete file from sd card
@@ -488,6 +509,12 @@ private slots:
     void newMessage(const QByteArray &message);
 
     /**
+     * @brief Connect to SerialLayer::pushedCommand
+     * @param command: newCommand.
+     */
+    void newCommand(const QByteArray &command);
+
+    /**
      * @brief Search for firmware string in message.
      * A Helper function for Firmware detection
      * @param message
@@ -500,9 +527,20 @@ private slots:
     void locateSerialPort();
 
     /**
+     * @brief Attempts to disableResetOnConnect for the selected port.
+     * @param port: the port.
+     */
+    void disableResetOnConnect(const QString &port);
+
+    /**
      * @brief Send request to the printer for the sd card file list.
      */
     void getSDFileList();
+
+    /**
+     * @brief Handle serial Errors.
+     */
+    void handleSerialError(QSerialPort::SerialPortError error);
 
 private:
     /**

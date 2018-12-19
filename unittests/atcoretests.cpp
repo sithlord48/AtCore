@@ -139,12 +139,12 @@ void AtCoreTests::testSdFileList()
 
     core->clearSdCardFileList();
     args = sSpy.takeLast();
-    QVERIFY(args.at(0).toStringList() == QStringList());
+    QVERIFY(args.at(0).toStringList().isEmpty());
 }
 
 void AtCoreTests::testSerialTimerIntervalChanged()
 {
-    QSignalSpy sSpy(core, SIGNAL(serialTimerIntervalChanged(quint16)));
+    QSignalSpy sSpy(core, SIGNAL(serialTimerIntervalChanged(int)));
     QVERIFY(sSpy.isValid());
     core->setSerialTimerInterval(1000);
     core->setSerialTimerInterval(1000);

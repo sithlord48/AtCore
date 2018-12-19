@@ -43,7 +43,7 @@ class  MainWindow: public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow() override;
+    ~MainWindow() override = default;
 
 public slots:
     /**
@@ -53,7 +53,7 @@ public slots:
      * @param  number     : index of sensor
      * @param  temp       : temperature
      */
-    void checkTemperature(uint sensorType, uint number, uint temp);
+    void checkTemperature(uint sensorType, uint number, float temp);
 
 private slots:
     //ButtonEvents
@@ -102,7 +102,7 @@ private:
     /**
      * @brief pluginCB index changed
      */
-    void pluginCBChanged(QString currentText);
+    void pluginCBChanged(const QString &currentText);
 
     /**
      * @brief setupActions for KXMLGui
@@ -164,6 +164,7 @@ private:
     QComboBox *comboBAUD = nullptr;
     QComboBox *comboPlugin = nullptr;
     QPushButton *buttonConnect = nullptr;
+    QCheckBox *cbReset = nullptr;
 
     void makeMoveDock();
     QDockWidget *moveDock = nullptr;
